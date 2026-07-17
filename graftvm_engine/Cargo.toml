@@ -1,0 +1,10 @@
+[package]
+name = "graftvm_engine"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+graftvm_data = { path = "../graftvm_data" }
+graftvm_fragment = { path = "../graftvm_fragment" }
+graftvm_window = { path = "../graftvm_window" }
+graftvm_error = { path = "../graftvm_error" }

@@ -1,0 +1,7 @@
+[package]
+name = "graftvm_fragment"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+graftvm_data = { path = "../graftvm_data" }

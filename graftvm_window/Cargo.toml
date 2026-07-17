@@ -1,0 +1,7 @@
+[package]
+name = "graftvm_window"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+graftvm_fragment = { path = "../graftvm_fragment" }
