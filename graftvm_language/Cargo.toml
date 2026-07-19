@@ -1,4 +1,6 @@
 [package]
-name = "graftvm_data"
+name = "graftvm_language"
 version = "0.1.0"
 edition = "2021"
+
+[dependencies]

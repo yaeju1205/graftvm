@@ -5,16 +5,9 @@ edition = "2021"
 
 [workspace]
 members = [
-    "graftvm_data",
+    "graftvm_liternal",
     "graftvm_fragment",
     "graftvm_window",
-    "graftvm_error",
     "graftvm_engine",
+    "graftvm_language",
 ]
-
-[dependencies]
-graftvm_data = { path = "graftvm_data" }
-graftvm_fragment = { path = "graftvm_fragment" }
-graftvm_window = { path = "graftvm_window" }
-graftvm_error = { path = "graftvm_error" }
-graftvm_engine = { path = "graftvm_engine" }

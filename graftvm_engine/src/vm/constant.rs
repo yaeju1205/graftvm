@@ -1,8 +1,7 @@
 use std::rc::Rc;
 
-use graftvm_data::data::Liternal;
-use graftvm_error::RuntimeError;
 use graftvm_fragment::Fragment;
+use graftvm_liternal::Liternal;
 
 use crate::{opcode::Addr, vm::VM};
 
@@ -15,7 +14,7 @@ impl VM {
         self.constant_pool.insert(index, data);
     }
 
-    pub(super) fn load_data(&mut self, dst: Addr, index: usize) -> Result<(), RuntimeError> {
+    pub(super) fn load_data(&mut self, dst: Addr, index: usize) -> Result<(), String> {
         if let Some(data) = self.constant_pool.get(&index) {
             self.load_data_rc(dst, data.clone())?;
         }
@@ -23,11 +22,7 @@ impl VM {
         Ok(())
     }
 
-    pub(super) fn load_data_rc(
-        &mut self,
-        dst: Addr,
-        data: Rc<Liternal>,
-    ) -> Result<(), RuntimeError> {
+    pub(super) fn load_data_rc(&mut self, dst: Addr, data: Rc<Liternal>) -> Result<(), String> {
         *self.get_slot_mut(dst)? = Some(Fragment::from(data));
 
         Ok(())
