@@ -299,9 +299,6 @@ impl VM {
 
     pub fn step(&mut self) -> Result<(), String> {
         let opcode = self.bytecode[self.pc].clone();
-
-        self.pc += 1;
-
         self.execute(opcode)
     }
 
