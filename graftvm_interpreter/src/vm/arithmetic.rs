@@ -1,15 +1,17 @@
-use graftvm_fragment::Fragment;
+use graftvm_bytecode::Addr;
 use graftvm_liternal::Liternal;
+use graftvm_window::WindowSlot;
 use rpipe::pipe;
 
-use crate::{opcode::Addr, vm::VM};
+use crate::vm::VM;
 
 impl VM {
     pub(crate) fn addi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -17,7 +19,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -25,7 +28,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -33,7 +37,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -41,7 +46,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -49,7 +55,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -57,7 +64,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -65,7 +73,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -73,7 +82,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -81,7 +91,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -89,7 +100,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -97,7 +109,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -108,7 +121,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -119,7 +133,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -130,7 +145,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -141,7 +157,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -152,7 +169,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -163,7 +181,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -174,7 +193,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -185,7 +205,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -193,7 +214,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -201,7 +223,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -209,7 +232,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -217,7 +241,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -225,7 +250,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -233,7 +259,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -241,7 +268,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -249,7 +277,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -257,7 +286,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -265,7 +295,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -273,7 +304,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -281,7 +313,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -292,7 +325,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -303,7 +337,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -314,7 +349,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -325,7 +361,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -336,7 +373,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -347,7 +385,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -358,7 +397,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -369,7 +409,8 @@ impl VM {
         if rhs_data == 0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -377,7 +418,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -385,7 +427,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data + rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
         Ok(())
     }
 
@@ -393,7 +436,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -401,7 +445,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data - rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
         Ok(())
     }
 
@@ -409,7 +454,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -417,7 +463,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
         let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data * rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
         Ok(())
     }
 
@@ -428,7 +475,8 @@ impl VM {
         if rhs_data == 0. {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -439,7 +487,8 @@ impl VM {
         if rhs_data == 0.0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data / rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
         Ok(())
     }
 
@@ -450,7 +499,8 @@ impl VM {
         if rhs_data == 0.0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 
@@ -461,7 +511,8 @@ impl VM {
         if rhs_data == 0.0 {
             return Err("division by zero".into());
         }
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data % rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
         Ok(())
     }
 }

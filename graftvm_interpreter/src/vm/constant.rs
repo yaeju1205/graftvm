@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
-use graftvm_fragment::Fragment;
+use graftvm_bytecode::Addr;
 use graftvm_liternal::Liternal;
+use graftvm_window::WindowSlot;
 
-use crate::{opcode::Addr, vm::VM};
+use crate::vm::VM;
 
 impl VM {
     pub(super) fn store_data(&mut self, index: usize, data: Liternal) {
@@ -23,7 +24,7 @@ impl VM {
     }
 
     pub(super) fn load_data_rc(&mut self, dst: Addr, data: Rc<Liternal>) -> Result<(), String> {
-        *self.get_slot_mut(dst)? = Some(Fragment::from(data));
+        *self.get_slot_mut(dst)? = Some(WindowSlot::from(data));
 
         Ok(())
     }

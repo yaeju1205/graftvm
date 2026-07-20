@@ -1,15 +1,17 @@
-use graftvm_fragment::Fragment;
+use graftvm_bytecode::Addr;
 use graftvm_liternal::Liternal;
+use graftvm_window::WindowSlot;
 use rpipe::pipe;
 
-use crate::{opcode::Addr, vm::VM};
+use crate::vm::VM;
 
 impl VM {
     pub(crate) fn andi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -17,7 +19,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -25,7 +28,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -33,7 +37,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -41,7 +46,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -49,7 +55,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -57,7 +64,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -65,7 +73,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -73,7 +82,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -81,7 +91,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -89,7 +100,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -97,35 +109,36 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
     pub(crate) fn noti8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn noti16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn noti32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn noti64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
@@ -133,8 +146,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -142,8 +158,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -151,8 +170,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -160,8 +182,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -169,8 +194,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -178,8 +206,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -187,8 +218,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -196,8 +230,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
         let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -205,7 +242,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -213,7 +251,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -221,7 +260,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -229,7 +269,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data & rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data & rhs_data));
         Ok(())
     }
 
@@ -237,7 +278,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -245,7 +287,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -253,7 +296,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -261,7 +305,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data | rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data | rhs_data));
         Ok(())
     }
 
@@ -269,7 +314,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -277,7 +323,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -285,7 +332,8 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
@@ -293,35 +341,36 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, lhs_data ^ rhs_data));
+        *self.get_slot_mut(dst)? =
+            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data ^ rhs_data));
         Ok(())
     }
 
     pub(crate) fn notu8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn notu16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn notu32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
     pub(crate) fn notu64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
         let frag = self.expect_number(src)?;
         let data = frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(Fragment::from, Liternal::from, !data));
+        *self.get_slot_mut(dst)? = Some(pipe!(WindowSlot::from, Liternal::from, !data));
         Ok(())
     }
 
@@ -329,8 +378,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -338,8 +390,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -347,8 +402,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -356,8 +414,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data << rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data << rhs_data
+        ));
         Ok(())
     }
 
@@ -365,8 +426,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -374,8 +438,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -383,8 +450,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 
@@ -392,8 +462,11 @@ impl VM {
         let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
         let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
         let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(Fragment::from, Liternal::from, lhs_data >> rhs_data));
+        *self.get_slot_mut(dst)? = Some(pipe!(
+            WindowSlot::from,
+            Liternal::from,
+            lhs_data >> rhs_data
+        ));
         Ok(())
     }
 }

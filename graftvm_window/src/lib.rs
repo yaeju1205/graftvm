@@ -1,4 +1,27 @@
-use graftvm_fragment::Fragment;
+use std::rc::Rc;
+
+use graftvm_liternal::Liternal;
+
+#[derive(Clone)]
+pub struct WindowSlot {
+    pub data: Rc<Liternal>,
+    pub alive: bool,
+}
+
+impl From<Liternal> for WindowSlot {
+    fn from(data: Liternal) -> Self {
+        Self {
+            data: Rc::new(data),
+            alive: true,
+        }
+    }
+}
+
+impl From<Rc<Liternal>> for WindowSlot {
+    fn from(data: Rc<Liternal>) -> Self {
+        Self { data, alive: true }
+    }
+}
 
 pub struct WindowState {
     pub id: usize,
@@ -19,7 +42,7 @@ impl WindowState {
 }
 
 pub struct Window {
-    pub slots: Vec<Option<Fragment>>,
+    pub slots: Vec<Option<WindowSlot>>,
     pub state: WindowState,
 }
 

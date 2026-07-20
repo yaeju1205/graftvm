@@ -7,25 +7,21 @@ name = "graftvm"
 version = "0.1.0"
 
 [[package]]
+name = "graftvm_bytecode"
+version = "0.1.0"
+dependencies = [
+ "graftvm_liternal",
+]
+
+[[package]]
 name = "graftvm_engine"
 version = "0.1.0"
 dependencies = [
- "graftvm_fragment",
+ "graftvm_bytecode",
  "graftvm_liternal",
  "graftvm_window",
  "rpipe",
 ]
-
-[[package]]
-name = "graftvm_fragment"
-version = "0.1.0"
-dependencies = [
- "graftvm_liternal",
-]
-
-[[package]]
-name = "graftvm_language"
-version = "0.1.0"
 
 [[package]]
 name = "graftvm_liternal"
@@ -35,7 +31,7 @@ version = "0.1.0"
 name = "graftvm_window"
 version = "0.1.0"
 dependencies = [
- "graftvm_fragment",
+ "graftvm_liternal",
 ]
 
 [[package]]

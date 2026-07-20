@@ -1,9 +1,8 @@
 use std::{collections::HashMap, rc::Rc};
 
+use graftvm_bytecode::{Bytecode, Opcode};
 use graftvm_liternal::Liternal;
 use graftvm_window::Window;
-
-use crate::opcode::Opcode;
 
 mod arithmetic;
 mod bitwise;
@@ -13,8 +12,6 @@ mod conversion;
 mod unary;
 mod utils;
 mod window;
-
-pub type Bytecode = Vec<Opcode>;
 
 #[derive(Default)]
 struct VMState {

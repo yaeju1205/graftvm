@@ -6,8 +6,7 @@ edition = "2021"
 [workspace]
 members = [
     "graftvm_liternal",
-    "graftvm_fragment",
+    "graftvm_bytecode",
     "graftvm_window",
-    "graftvm_engine",
-    "graftvm_language",
+    "graftvm_interpreter",
 ]

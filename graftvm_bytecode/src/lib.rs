@@ -231,3 +231,5 @@ pub enum Opcode {
     Enter,
     Exit,
 }
+
+pub type Bytecode = Vec<Opcode>;

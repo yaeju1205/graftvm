@@ -1,9 +1,9 @@
 use std::rc::Rc;
 
-use graftvm_fragment::Fragment;
-use graftvm_window::Window;
+use graftvm_bytecode::Addr;
+use graftvm_window::{Window, WindowSlot};
 
-use crate::{opcode::Addr, vm::VM};
+use crate::vm::VM;
 
 impl VM {
     fn check_slot(&self, src: &Addr) -> Result<(), String> {
@@ -25,13 +25,13 @@ impl VM {
         Ok(())
     }
 
-    pub(super) fn get_slot(&self, src: Addr) -> Result<&Option<Fragment>, String> {
+    pub(super) fn get_slot(&self, src: Addr) -> Result<&Option<WindowSlot>, String> {
         self.check_slot(&src)?;
 
         Ok(self.window.slots.get(src.slot).unwrap())
     }
 
-    pub(super) fn get_slot_mut(&mut self, src: Addr) -> Result<&mut Option<Fragment>, String> {
+    pub(super) fn get_slot_mut(&mut self, src: Addr) -> Result<&mut Option<WindowSlot>, String> {
         self.check_slot(&src)?;
 
         Ok(Rc::get_mut(&mut self.window)

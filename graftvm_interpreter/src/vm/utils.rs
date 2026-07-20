@@ -1,9 +1,10 @@
-use graftvm_fragment::Fragment;
+use graftvm_bytecode::Addr;
+use graftvm_window::WindowSlot;
 
-use crate::{opcode::Addr, vm::VM};
+use crate::vm::VM;
 
 impl VM {
-    pub(super) fn expect_number(&self, addr: Addr) -> Result<&Fragment, String> {
+    pub(super) fn expect_number(&self, addr: Addr) -> Result<&WindowSlot, String> {
         if let Some(fragment) = self.get_slot(addr)? {
             Ok(fragment)
         } else {
@@ -15,7 +16,7 @@ impl VM {
         &self,
         lhs: Addr,
         rhs: Addr,
-    ) -> Result<(&Fragment, &Fragment), String> {
+    ) -> Result<(&WindowSlot, &WindowSlot), String> {
         let lhs_fragment = self.expect_number(lhs)?;
         let rhs_fragment = self.expect_number(rhs)?;
 
