@@ -96,8 +96,8 @@ impl Debug for Liternal {
             Liternal::Int(v) => write!(f, "{:?}", v),
             Liternal::UInt(v) => write!(f, "{:?}", v),
             Liternal::Float(v) => write!(f, "{:?}", v),
-            Liternal::String(_) => f.write_str("String"),
-            Liternal::Bool(_) => f.write_str("Bool"),
+            Liternal::String(v) => write!(f, "String({:?})", v),
+            Liternal::Bool(v) => write!(f, "Bool({})", v),
         }
     }
 }

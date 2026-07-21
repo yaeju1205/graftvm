@@ -55,10 +55,10 @@ impl Int {
 impl Debug for Int {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Int8(_) => f.write_str("Int8"),
-            Self::Int16(_) => f.write_str("Int16"),
-            Self::Int32(_) => f.write_str("Int32"),
-            Self::Int64(_) => f.write_str("Int64"),
+            Self::Int8(v) => write!(f, "Int8({})", v),
+            Self::Int16(v) => write!(f, "Int16({})", v),
+            Self::Int32(v) => write!(f, "Int32({})", v),
+            Self::Int64(v) => write!(f, "Int64({})", v),
         }
     }
 }

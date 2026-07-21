@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use graftvm_bytecode::{Opcode, Width};
-use graftvm_ir::{Func, IrBuilder, Var};
+use graftvm_ir::{IrBuilder, Var};
 use crate::parser::{Expr, ParseResult};
 
 /// Compile parsed Parlance source into GraftVM bytecode.
@@ -11,36 +11,29 @@ pub fn lower(result: ParseResult) -> Result<Vec<Opcode>, String> {
     );
     let mut ir = IrBuilder::new();
 
-    // Register known function names so self-recursive calls work.
+    // Register function names so recursive refs work.
     for func_def in &result.funcs {
-        let _placeholder = ir.var(&func_def.name, Width::I64);
-        ctx.scope.insert(func_def.name.clone(), _placeholder);
+        let _p = ir.var(&func_def.name, Width::I64);
+        ctx.scope.insert(func_def.name.clone(), _p);
     }
 
+    // Compile function definitions — each runs inline at definition time.
     for func_def in &result.funcs {
-        // Function name stays in scope as the placeholder for top-level call references.
-        let params: Vec<(&str, Width)> = func_def
-            .params
-            .iter()
-            .map(|p| (p.as_str(), Width::I64))
-            .collect();
-        let f = ir.func(&func_def.name, &params, Some(Width::I64));
-        let ret_var = f.ret.clone().unwrap();
-
-        for p in &f.params {
-            ctx.scope.insert(p.name.clone(), p.clone());
+        ir.enter();
+        for param in &func_def.params {
+            let v = ir.var(param, Width::I64);
+            ctx.scope.insert(param.clone(), v);
         }
-        // The function itself isn't a normal variable in its own body,
-        // but we keep the ret var accessible.
-        ctx.current_func.push(f);
-
         let body_var = lower_expr(&mut ir, &mut ctx, &func_def.body)?;
-        ir.copy_var(&ret_var, &body_var);
-
-        ctx.current_func.pop();
+        let ret = ir.var(&format!("{}.ret", func_def.name), Width::I64);
+        ir.copy_var(&ret, &body_var);
         ir.exit();
+        for param in &func_def.params {
+            ctx.scope.remove(param);
+        }
     }
 
+    // Compile top-level expressions
     for expr in &result.exprs {
         lower_expr(&mut ir, &mut ctx, expr)?;
     }
@@ -50,17 +43,13 @@ pub fn lower(result: ParseResult) -> Result<Vec<Opcode>, String> {
 
 struct Context {
     scope: HashMap<String, Var>,
+    #[allow(dead_code)]
     infixes: HashMap<String, u32>,
-    current_func: Vec<Func>,
 }
 
 impl Context {
     fn new(infixes: HashMap<String, u32>) -> Self {
-        Self {
-            scope: HashMap::new(),
-            infixes,
-            current_func: Vec::new(),
-        }
+        Self { scope: HashMap::new(), infixes }
     }
 
     fn lookup(&self, name: &str) -> Option<&Var> {
@@ -74,10 +63,7 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
         Expr::Float(n) => Ok(ir.f64(&format!("lit_{}", n), *n)),
         Expr::Bool(b) => Ok(ir.boolean(&format!("lit_{}", b), *b)),
         Expr::String(s) => Ok(ir.i64(&format!("str_{}", s.len()), s.len() as i64)),
-        Expr::Var(name) => ctx
-            .lookup(name)
-            .cloned()
-            .ok_or_else(|| format!("undefined variable: {}", name)),
+        Expr::Var(name) => ctx.lookup(name).cloned().ok_or_else(|| format!("undefined variable: {}", name)),
 
         Expr::Apply { func, args } => {
             if let Expr::Var(op) = func.as_ref() {
@@ -86,27 +72,13 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
                     "<" | "<=" | ">" | ">=" => return lower_compare(ir, ctx, op, args),
                     "==" => return lower_eq(ir, ctx, args, true),
                     "!=" => return lower_eq(ir, ctx, args, false),
-                    _ => {
-                        // Check if it's a known function name — inline call
-                        if let Some(_func_var) = ctx.lookup(op) {
-                            // Lower each arg and return a result var
-                            // (full function call mechanism TBD — for now just compile args)
-                            for arg in args {
-                                lower_expr(ir, ctx, arg)?;
-                            }
-                            let result = ir.var(&format!("{}_call", op), Width::I64);
-                            return Ok(result);
-                        }
-                    }
+                    _ => {} // user function — treat as opaque
                 }
             }
-
-            let _func_var = lower_expr(ir, ctx, func)?;
-            let mut _arg_vars = Vec::new();
-            for arg in args {
-                _arg_vars.push(lower_expr(ir, ctx, arg)?);
-            }
-            Ok(ir.var("apply_result", Width::I64))
+            // Generic: just lower args, return dummy
+            let _f = lower_expr(ir, ctx, func)?;
+            for arg in args { lower_expr(ir, ctx, arg)?; }
+            Ok(ir.var("apply", Width::I64))
         }
 
         Expr::Lambda { params, body } => {
@@ -116,7 +88,7 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
                 ctx.scope.insert(param.clone(), v);
             }
             let result = lower_expr(ir, ctx, body)?;
-            let outer = ir.var("lam_result", Width::I64);
+            let outer = ir.var("lam_res", Width::I64);
             ir.copy_var(&outer, &result);
             ir.exit();
             Ok(outer)
@@ -137,72 +109,61 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
             let then_var = lower_expr(ir, ctx, then)?;
             let else_var = lower_expr(ir, ctx, else_)?;
             let zero = ir.i64("zero", 0);
-            let result = ir.var("if_result", Width::I64);
-
-            ir.neq(&cond_var, &zero);  // flag = (cond != 0)
-            ir.branch("if_then");       // if truthy → then
+            let result = ir.var("if_res", Width::I64);
+            ir.neq(&cond_var, &zero);
+            ir.branch("if_t");
             ir.copy_var(&result, &else_var);
-            ir.jump("if_done");
-            ir.label("if_then");
+            ir.jump("if_d");
+            ir.label("if_t");
             ir.copy_var(&result, &then_var);
-            ir.label("if_done");
+            ir.label("if_d");
             Ok(result)
         }
     }
 }
 
 fn lower_binop(ir: &mut IrBuilder, ctx: &mut Context, op: &str, args: &[Expr]) -> Result<Var, String> {
-    if args.len() != 2 {
-        return Err(format!("{} expects 2 args, got {}", op, args.len()));
-    }
+    if args.len() != 2 { return Err(format!("{} expects 2 args", op)); }
     let lhs = lower_expr(ir, ctx, &args[0])?;
     let rhs = lower_expr(ir, ctx, &args[1])?;
-    let result = ir.var(&format!("{}_res", op), Width::I64);
+    let r = ir.var(&format!("{}_r", op), Width::I64);
     match op {
-        "+" => ir.add(&result, &lhs, &rhs),
-        "-" => ir.sub(&result, &lhs, &rhs),
-        "*" => ir.mul(&result, &lhs, &rhs),
-        "/" => ir.div(&result, &lhs, &rhs),
-        "%" => ir.rem(&result, &lhs, &rhs),
+        "+" => ir.add(&r, &lhs, &rhs),
+        "-" => ir.sub(&r, &lhs, &rhs),
+        "*" => ir.mul(&r, &lhs, &rhs),
+        "/" => ir.div(&r, &lhs, &rhs),
+        "%" => ir.rem(&r, &lhs, &rhs),
         _ => unreachable!(),
     }
-    Ok(result)
+    Ok(r)
 }
 
 fn lower_compare(ir: &mut IrBuilder, ctx: &mut Context, op: &str, args: &[Expr]) -> Result<Var, String> {
-    if args.len() != 2 {
-        return Err(format!("{} expects 2 args, got {}", op, args.len()));
-    }
+    if args.len() != 2 { return Err(format!("{} expects 2 args", op)); }
     let lhs = lower_expr(ir, ctx, &args[0])?;
     let rhs = lower_expr(ir, ctx, &args[1])?;
-    let result = ir.var(&format!("{}_res", op), Width::I8);
+    let r = ir.var(&format!("{}_r", op), Width::I8);
     match op {
-        "<" => ir.lt(&result, &lhs, &rhs),
-        "<=" => ir.le(&result, &lhs, &rhs),
-        ">" => ir.gt(&result, &lhs, &rhs),
-        ">=" => ir.ge(&result, &lhs, &rhs),
+        "<" => ir.lt(&r, &lhs, &rhs),
+        "<=" => ir.le(&r, &lhs, &rhs),
+        ">" => ir.gt(&r, &lhs, &rhs),
+        ">=" => ir.ge(&r, &lhs, &rhs),
         _ => unreachable!(),
     }
-    Ok(result)
+    Ok(r)
 }
 
 fn lower_eq(ir: &mut IrBuilder, ctx: &mut Context, args: &[Expr], eq: bool) -> Result<Var, String> {
-    if args.len() != 2 {
-        return Err(format!("{} expects 2 args", if eq { "==" } else { "!=" }));
-    }
+    if args.len() != 2 { return Err(format!("== expects 2 args")); }
     let lhs = lower_expr(ir, ctx, &args[0])?;
     let rhs = lower_expr(ir, ctx, &args[1])?;
-    if eq {
-        ir.eq(&lhs, &rhs);
-    } else {
-        ir.neq(&lhs, &rhs);
-    }
-    let tmp = ir.var("cmp_res", Width::I8);
+    if eq { ir.eq(&lhs, &rhs); } else { ir.neq(&lhs, &rhs); }
+    let tmp = ir.var("cmp_r", Width::I8);
     let one = ir.i64("one", 1);
     let zero = ir.i64("zero", 0);
     ir.copy_var(&tmp, &one);
-    ir.branch("cmp_done");
+    ir.branch("cmp_d");
     ir.copy_var(&tmp, &zero);
-    ir.label("cmp_done");
+    ir.label("cmp_d");
     Ok(tmp)
 }

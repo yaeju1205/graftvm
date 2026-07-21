@@ -7,7 +7,9 @@ name = "graftvm"
 version = "0.1.0"
 dependencies = [
  "graftvm_bytecode",
+ "graftvm_engine",
  "graftvm_language",
+ "graftvm_window",
 ]
 
 [[package]]
