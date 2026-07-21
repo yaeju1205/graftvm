@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
-use graftvm_bytecode::{Bytecode, Opcode, Width};
-use graftvm_liternal::{Float, Int, Liternal, UInt};
+use graftvm_bytecode::{Bytecode, Opcode};
+use graftvm_liternal::Liternal;
 use graftvm_window::{Window, WindowSlot};
 
 mod arithmetic;
@@ -9,11 +9,10 @@ mod bitwise;
 mod compare;
 mod constant;
 mod conversion;
-mod utils;
 mod window;
 
 #[derive(Default)]
-struct VMState {
+pub(super) struct VMState {
     pub cmp: bool,
 }
 
@@ -34,110 +33,60 @@ macro_rules! binop_width {
             Width::I8 => {
                 let $v = val_l.expect_int()?.expect_i8()?;
                 let $r = val_r.expect_int()?.expect_i8()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I16 => {
                 let $v = val_l.expect_int()?.expect_i16()?;
                 let $r = val_r.expect_int()?.expect_i16()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I32 => {
                 let $v = val_l.expect_int()?.expect_i32()?;
                 let $r = val_r.expect_int()?.expect_i32()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I64 => {
                 let $v = val_l.expect_int()?.expect_i64()?;
                 let $r = val_r.expect_int()?.expect_i64()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U8 => {
                 let $v = val_l.expect_uint()?.expect_u8()?;
                 let $r = val_r.expect_uint()?.expect_u8()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U16 => {
                 let $v = val_l.expect_uint()?.expect_u16()?;
                 let $r = val_r.expect_uint()?.expect_u16()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U32 => {
                 let $v = val_l.expect_uint()?.expect_u32()?;
                 let $r = val_r.expect_uint()?.expect_u32()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U64 => {
                 let $v = val_l.expect_uint()?.expect_u64()?;
                 let $r = val_r.expect_uint()?.expect_u64()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::F32 => {
                 let $v = val_l.expect_float()?.expect_f32()?;
                 let $r = val_r.expect_float()?.expect_f32()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::F64 => {
                 let $v = val_l.expect_float()?.expect_f64()?;
                 let $r = val_r.expect_float()?.expect_f64()?;
-                Liternal::from($expr)
+                graftvm_liternal::Liternal::from($expr)
             }
         };
-        *$self.slot_mut(($dst).slot) = Some(WindowSlot::from(result));
+        *$self.slot_mut(($dst).slot) = Some(graftvm_window::WindowSlot::from(result));
         Ok(())
     }};
 }
 
-macro_rules! unop_width {
-    ($self:expr, $dst:expr, $src:expr, $ty:expr, |$v:ident| $expr:expr) => {{
-        let val = $self.read_one($src)?;
-        let result = match $ty {
-            Width::I8 => {
-                let $v = val.expect_int()?.expect_i8()?;
-                Liternal::from($expr)
-            }
-            Width::I16 => {
-                let $v = val.expect_int()?.expect_i16()?;
-                Liternal::from($expr)
-            }
-            Width::I32 => {
-                let $v = val.expect_int()?.expect_i32()?;
-                Liternal::from($expr)
-            }
-            Width::I64 => {
-                let $v = val.expect_int()?.expect_i64()?;
-                Liternal::from($expr)
-            }
-            Width::U8 => {
-                let $v = val.expect_uint()?.expect_u8()?;
-                Liternal::from($expr)
-            }
-            Width::U16 => {
-                let $v = val.expect_uint()?.expect_u16()?;
-                Liternal::from($expr)
-            }
-            Width::U32 => {
-                let $v = val.expect_uint()?.expect_u32()?;
-                Liternal::from($expr)
-            }
-            Width::U64 => {
-                let $v = val.expect_uint()?.expect_u64()?;
-                Liternal::from($expr)
-            }
-            Width::F32 => {
-                let $v = val.expect_float()?.expect_f32()?;
-                Liternal::from($expr)
-            }
-            Width::F64 => {
-                let $v = val.expect_float()?.expect_f64()?;
-                Liternal::from($expr)
-            }
-        };
-        *$self.slot_mut(($dst).slot) = Some(WindowSlot::from(result));
-        Ok(())
-    }};
-}
-
-pub(super) use {binop_width, unop_width};
+pub(super) use binop_width;
 
 impl VM {
     pub fn new(bytecode: Bytecode) -> Self {
@@ -159,12 +108,12 @@ impl VM {
             Opcode::Rem { dst, lhs, rhs, ty } => self.rem(dst, lhs, rhs, ty)?,
             Opcode::Neg { dst, src, ty } => self.neg(dst, src, ty)?,
 
-            Opcode::Lt { dst, lhs, rhs, ty } => self.lt(dst, lhs, rhs, ty)?,
-            Opcode::Le { dst, lhs, rhs, ty } => self.le(dst, lhs, rhs, ty)?,
-            Opcode::Gt { dst, lhs, rhs, ty } => self.gt(dst, lhs, rhs, ty)?,
-            Opcode::Ge { dst, lhs, rhs, ty } => self.ge(dst, lhs, rhs, ty)?,
-            Opcode::Eq { lhs, rhs } => self.eq(lhs, rhs)?,
-            Opcode::Neq { lhs, rhs } => self.neq(lhs, rhs)?,
+            Opcode::Lt { dst, lhs, rhs, ty } => self.cmp_lt(dst, lhs, rhs, ty)?,
+            Opcode::Le { dst, lhs, rhs, ty } => self.cmp_le(dst, lhs, rhs, ty)?,
+            Opcode::Gt { dst, lhs, rhs, ty } => self.cmp_gt(dst, lhs, rhs, ty)?,
+            Opcode::Ge { dst, lhs, rhs, ty } => self.cmp_ge(dst, lhs, rhs, ty)?,
+            Opcode::Eq { lhs, rhs } => self.cmp_eq(lhs, rhs)?,
+            Opcode::Neq { lhs, rhs } => self.cmp_neq(lhs, rhs)?,
 
             Opcode::And { dst, lhs, rhs, ty } => self.and(dst, lhs, rhs, ty)?,
             Opcode::Or { dst, lhs, rhs, ty } => self.or(dst, lhs, rhs, ty)?,
@@ -279,9 +228,5 @@ impl VM {
     pub(super) fn current_window_mut(&mut self) -> &mut Window {
         let len = self.window_stack.len();
         &mut self.window_stack[len - 1]
-    }
-
-    pub(super) fn window_mut_at(&mut self, id: usize) -> &mut Window {
-        &mut self.window_stack[id]
     }
 }

@@ -24,6 +24,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "graftvm_ir"
+version = "0.1.0"
+dependencies = [
+ "graftvm_bytecode",
+ "graftvm_liternal",
+]
+
+[[package]]
 name = "graftvm_liternal"
 version = "0.1.0"
 
