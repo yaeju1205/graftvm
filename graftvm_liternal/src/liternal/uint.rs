@@ -55,10 +55,10 @@ impl UInt {
 impl Debug for UInt {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::UInt8(_) => f.write_str("UInt8"),
-            Self::UInt16(_) => f.write_str("UInt16"),
-            Self::UInt32(_) => f.write_str("UInt32"),
-            Self::UInt64(_) => f.write_str("UInt64"),
+            Self::UInt8(v) => write!(f, "UInt8({})", v),
+            Self::UInt16(v) => write!(f, "UInt16({})", v),
+            Self::UInt32(v) => write!(f, "UInt32({})", v),
+            Self::UInt64(v) => write!(f, "UInt64({})", v),
         }
     }
 }

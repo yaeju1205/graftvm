@@ -33,8 +33,8 @@ impl Float {
 impl Debug for Float {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Float32(_) => f.write_str("Float32"),
-            Self::Float64(_) => f.write_str("Float64"),
+            Self::Float32(v) => write!(f, "Float32({})", v),
+            Self::Float64(v) => write!(f, "Float64({})", v),
         }
     }
 }

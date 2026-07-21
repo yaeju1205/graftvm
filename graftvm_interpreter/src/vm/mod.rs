@@ -173,6 +173,30 @@ impl VM {
         }
         Ok(())
     }
+
+    /// Run with full instruction trace printed to stdout.
+    pub fn run_debug(&mut self) -> Result<(), String> {
+        while self.pc < self.bytecode.len() {
+            let op = &self.bytecode[self.pc];
+            println!("  [{:>3}] {:?}", self.pc, op);
+            self.step()?;
+        }
+        Ok(())
+    }
+
+    /// Dump the final state of all windows and constants.
+    pub fn dump_state(&self) {
+        println!(";; ── VM state ──");
+        for (_i, w) in self.window_stack.iter().enumerate() {
+            println!(";; window {} ({} slots):", w.id, w.slots.len());
+            for (j, slot) in w.slots.iter().enumerate() {
+                if let Some(s) = slot {
+                    println!(";;   slot {}: {:?}", j, s.data);
+                }
+            }
+        }
+        println!(";; cmp flag: {}", self.state.cmp);
+    }
 }
 
 // ── Slot read helpers (owned, not borrowed) ──

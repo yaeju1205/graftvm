@@ -1,30 +1,41 @@
 fn main() {
     let args: Vec<String> = std::env::args().collect();
+    let mut debug = false;
+    let mut rest: Vec<String> = Vec::new();
 
-    if args.len() < 2 {
-        repl();
+    let mut i = 1;
+    while i < args.len() {
+        match args[i].as_str() {
+            "-d" | "--debug" => debug = true,
+            other => rest.push(other.to_string()),
+        }
+        i += 1;
+    }
+
+    if rest.is_empty() {
+        repl(debug);
         return;
     }
 
-    let source = if args[1] == "-e" {
-        // inline expression
-        args[2..].join(" ")
+    let source = if rest[0] == "-e" {
+        rest[1..].join(" ")
     } else {
-        // file path
-        match std::fs::read_to_string(&args[1]) {
+        match std::fs::read_to_string(&rest[0]) {
             Ok(s) => s,
             Err(e) => {
-                eprintln!("error: could not read '{}': {}", args[1], e);
+                eprintln!("error: could not read '{}': {}", rest[0], e);
                 std::process::exit(1);
             }
         }
     };
 
-    match run(&source) {
-        Ok(bytecode) => {
-            println!(";; bytecode generated: {} instructions", bytecode.len());
-            for (i, op) in bytecode.iter().enumerate() {
-                println!("{:>4}: {:?}", i, op);
+    match run(&source, debug) {
+        Ok(bc) => {
+            if debug {
+                println!(";; bytecode: {} instructions", bc.len());
+                for (i, op) in bc.iter().enumerate() {
+                    println!("  [{:>3}] {:?}", i, op);
+                }
             }
         }
         Err(e) => {
@@ -34,14 +45,27 @@ fn main() {
     }
 }
 
-fn run(source: &str) -> Result<Vec<graftvm_bytecode::Opcode>, String> {
+fn run(source: &str, debug: bool) -> Result<Vec<graftvm_bytecode::Opcode>, String> {
     let tokens = graftvm_language::lexer::lex(source);
     let parsed = graftvm_language::parser::parse(&tokens)?;
     let bytecode = graftvm_language::lower::lower(parsed)?;
+
+    let mut vm = graftvm_engine::vm::VM::new(bytecode.clone());
+
+    if debug {
+        println!(";; ── execution trace ──");
+        vm.run_debug()
+    } else {
+        vm.run()
+    }
+    .map_err(|e| format!("runtime: {}", e))?;
+
+    vm.dump_state();
+
     Ok(bytecode)
 }
 
-fn repl() {
+fn repl(debug: bool) {
     println!("Parlance v0.1 — GraftVM frontend language");
     println!("Type an expression, or :quit to exit.");
     use std::io::Write;
@@ -58,13 +82,8 @@ fn repl() {
             continue;
         }
 
-        match run(line) {
-            Ok(bc) => {
-                println!(";; {} ops", bc.len());
-                for op in &bc {
-                    println!("   {:?}", op);
-                }
-            }
+        match run(line, debug) {
+            Ok(_) => {}
             Err(e) => println!(";; error: {}", e),
         }
     }

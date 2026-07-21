@@ -18,25 +18,23 @@ src/                 — Binary: REPL and file runner
 ## Quick Start
 
 ```bash
-cargo run --examples/fib.pl
-```
+# Run a Parlance source file
+cargo run -- examples/fact.gfvm
 
-Or start the REPL:
+# Run with instruction trace
+cargo run -- -d examples/fact.gfvm
 
-```bash
+# Start the REPL
 cargo run
-```
 
-Evaluate inline:
-
-```bash
+# Evaluate inline
 cargo run -- -e "(+ 1 2)"
 ```
 
 ## Parlance Language
 
 Parlance is a minimal S-expression-based language that compiles directly
-to GraftVM bytecode.
+to GraftVM bytecode and runs it on the built-in interpreter.
 
 ### Syntax
 
@@ -71,7 +69,7 @@ false
 
 ### Examples
 
-**Fibonacci:**
+**Fibonacci** (`examples/fib.gfvm`):
 ```scheme
 (infix + 3)
 (infix - 3)
@@ -85,7 +83,7 @@ false
 (fib 10)
 ```
 
-**Factorial:**
+**Factorial** (`examples/fact.gfvm`):
 ```scheme
 (infix * 4)
 (infix < 2)
@@ -96,6 +94,18 @@ false
       (* n (fact (- n 1)))))
 
 (fact 5)
+```
+
+### Flags
+
+| Flag | Description |
+|------|-------------|
+| `-d` / `--debug` | Print bytecode dump + execution trace + final VM state |
+| `-e` | Evaluate an inline expression |
+
+Example:
+```bash
+cargo run -- -d -e "(+ 1 2)"
 ```
 
 ## Architecture
@@ -114,12 +124,15 @@ Parlance source
      │
      ▼
   Opcode      → graftvm_interpreter::VM
+     │
+     ▼
+  dump_state  → slot values, cmp flag
 ```
 
 The language frontend (`graftvm_language`) converts Parlance source into
 GraftVM bytecode through a three-stage pipeline — lexing, parsing, and lowering
-via the high-level IR builder (`graftvm_ir`). The resulting bytecode can then
-be executed by the interpreter.
+via the high-level IR builder (`graftvm_ir`). The resulting bytecode is then
+executed by the interpreter, and the final VM state is displayed.
 
 ## License
 
