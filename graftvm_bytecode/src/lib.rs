@@ -1,6 +1,6 @@
 use graftvm_liternal::Liternal;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Addr {
     pub window: usize,
     pub slot: usize,
@@ -32,7 +32,7 @@ impl Width {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Opcode {
     // ── Arithmetic ──
     Add { dst: Addr, lhs: Addr, rhs: Addr, ty: Width },

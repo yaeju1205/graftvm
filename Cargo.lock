@@ -5,6 +5,10 @@ version = 4
 [[package]]
 name = "graftvm"
 version = "0.1.0"
+dependencies = [
+ "graftvm_bytecode",
+ "graftvm_language",
+]
 
 [[package]]
 name = "graftvm_bytecode"

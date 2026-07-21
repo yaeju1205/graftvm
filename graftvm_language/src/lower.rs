@@ -11,8 +11,14 @@ pub fn lower(result: ParseResult) -> Result<Vec<Opcode>, String> {
     );
     let mut ir = IrBuilder::new();
 
-    // Compile function definitions
+    // Register known function names so self-recursive calls work.
     for func_def in &result.funcs {
+        let _placeholder = ir.var(&func_def.name, Width::I64);
+        ctx.scope.insert(func_def.name.clone(), _placeholder);
+    }
+
+    for func_def in &result.funcs {
+        // Function name stays in scope as the placeholder for top-level call references.
         let params: Vec<(&str, Width)> = func_def
             .params
             .iter()
@@ -21,14 +27,13 @@ pub fn lower(result: ParseResult) -> Result<Vec<Opcode>, String> {
         let f = ir.func(&func_def.name, &params, Some(Width::I64));
         let ret_var = f.ret.clone().unwrap();
 
-        // Register params and ret in scope
         for p in &f.params {
             ctx.scope.insert(p.name.clone(), p.clone());
         }
-        ctx.scope.insert(format!("{}.ret", func_def.name), ret_var.clone());
+        // The function itself isn't a normal variable in its own body,
+        // but we keep the ret var accessible.
         ctx.current_func.push(f);
 
-        // Compile body into the return slot
         let body_var = lower_expr(&mut ir, &mut ctx, &func_def.body)?;
         ir.copy_var(&ret_var, &body_var);
 
@@ -36,7 +41,6 @@ pub fn lower(result: ParseResult) -> Result<Vec<Opcode>, String> {
         ir.exit();
     }
 
-    // Compile top-level expressions
     for expr in &result.exprs {
         lower_expr(&mut ir, &mut ctx, expr)?;
     }
@@ -82,17 +86,26 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
                     "<" | "<=" | ">" | ">=" => return lower_compare(ir, ctx, op, args),
                     "==" => return lower_eq(ir, ctx, args, true),
                     "!=" => return lower_eq(ir, ctx, args, false),
-                    _ => {}
+                    _ => {
+                        // Check if it's a known function name — inline call
+                        if let Some(_func_var) = ctx.lookup(op) {
+                            // Lower each arg and return a result var
+                            // (full function call mechanism TBD — for now just compile args)
+                            for arg in args {
+                                lower_expr(ir, ctx, arg)?;
+                            }
+                            let result = ir.var(&format!("{}_call", op), Width::I64);
+                            return Ok(result);
+                        }
+                    }
                 }
             }
 
-            // Generic application — treat as inline for now
             let _func_var = lower_expr(ir, ctx, func)?;
             let mut _arg_vars = Vec::new();
             for arg in args {
                 _arg_vars.push(lower_expr(ir, ctx, arg)?);
             }
-            // Return a dummy var (real function call mechanism TBD)
             Ok(ir.var("apply_result", Width::I64))
         }
 
@@ -121,16 +134,13 @@ fn lower_expr(ir: &mut IrBuilder, ctx: &mut Context, expr: &Expr) -> Result<Var,
 
         Expr::If { cond, then, else_ } => {
             let cond_var = lower_expr(ir, ctx, cond)?;
-            let zero = ir.i64("zero", 0);
-            ir.neq(&cond_var, &zero); // flag = (cond != 0)
-
-            // flag=true → cond is truthy → use `then`
-            let result = ir.var("if_result", Width::I64);
             let then_var = lower_expr(ir, ctx, then)?;
             let else_var = lower_expr(ir, ctx, else_)?;
+            let zero = ir.i64("zero", 0);
+            let result = ir.var("if_result", Width::I64);
 
-            ir.neq(&cond_var, &zero);
-            ir.branch("if_then");
+            ir.neq(&cond_var, &zero);  // flag = (cond != 0)
+            ir.branch("if_then");       // if truthy → then
             ir.copy_var(&result, &else_var);
             ir.jump("if_done");
             ir.label("if_then");
