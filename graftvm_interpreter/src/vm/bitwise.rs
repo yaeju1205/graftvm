@@ -1,6 +1,6 @@
 use graftvm_bytecode::{Addr, Width};
 
-use crate::vm::VM;
+use crate::vm::{binop_width, unop_width, VM};
 
 impl VM {
     pub(crate) fn and(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
