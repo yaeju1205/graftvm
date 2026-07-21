@@ -1,518 +1,159 @@
-use graftvm_bytecode::Addr;
+use graftvm_bytecode::{Addr, Width};
 use graftvm_liternal::Liternal;
 use graftvm_window::WindowSlot;
-use rpipe::pipe;
 
-use crate::vm::VM;
+use crate::vm::{binop_width, unop_width, VM};
 
 impl VM {
-    pub(crate) fn addi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
+    pub(crate) fn add(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        binop_width!(self, dst, lhs, rhs, ty, |v, r| v + r)
+    }
+
+    pub(crate) fn sub(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        binop_width!(self, dst, lhs, rhs, ty, |v, r| v - r)
+    }
+
+    pub(crate) fn mul(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        binop_width!(self, dst, lhs, rhs, ty, |v, r| v * r)
+    }
+
+    pub(crate) fn div(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let result = match ty {
+            Width::I8 => {
+                let v = vl.expect_int()?.expect_i8()?;
+                let r = vr.expect_int()?.expect_i8()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::I16 => {
+                let v = vl.expect_int()?.expect_i16()?;
+                let r = vr.expect_int()?.expect_i16()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::I32 => {
+                let v = vl.expect_int()?.expect_i32()?;
+                let r = vr.expect_int()?.expect_i32()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::I64 => {
+                let v = vl.expect_int()?.expect_i64()?;
+                let r = vr.expect_int()?.expect_i64()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::U8 => {
+                let v = vl.expect_uint()?.expect_u8()?;
+                let r = vr.expect_uint()?.expect_u8()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::U16 => {
+                let v = vl.expect_uint()?.expect_u16()?;
+                let r = vr.expect_uint()?.expect_u16()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::U32 => {
+                let v = vl.expect_uint()?.expect_u32()?;
+                let r = vr.expect_uint()?.expect_u32()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::U64 => {
+                let v = vl.expect_uint()?.expect_u64()?;
+                let r = vr.expect_uint()?.expect_u64()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::F32 => {
+                let v = vl.expect_float()?.expect_f32()?;
+                let r = vr.expect_float()?.expect_f32()?;
+                if r == 0.0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+            Width::F64 => {
+                let v = vl.expect_float()?.expect_f64()?;
+                let r = vr.expect_float()?.expect_f64()?;
+                if r == 0.0 { return Err("division by zero".into()); }
+                Liternal::from(v / r)
+            }
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(result));
         Ok(())
     }
 
-    pub(crate) fn addi16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
+    pub(crate) fn rem(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let result = match ty {
+            Width::I8 => {
+                let v = vl.expect_int()?.expect_i8()?;
+                let r = vr.expect_int()?.expect_i8()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::I16 => {
+                let v = vl.expect_int()?.expect_i16()?;
+                let r = vr.expect_int()?.expect_i16()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::I32 => {
+                let v = vl.expect_int()?.expect_i32()?;
+                let r = vr.expect_int()?.expect_i32()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::I64 => {
+                let v = vl.expect_int()?.expect_i64()?;
+                let r = vr.expect_int()?.expect_i64()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::U8 => {
+                let v = vl.expect_uint()?.expect_u8()?;
+                let r = vr.expect_uint()?.expect_u8()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::U16 => {
+                let v = vl.expect_uint()?.expect_u16()?;
+                let r = vr.expect_uint()?.expect_u16()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::U32 => {
+                let v = vl.expect_uint()?.expect_u32()?;
+                let r = vr.expect_uint()?.expect_u32()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::U64 => {
+                let v = vl.expect_uint()?.expect_u64()?;
+                let r = vr.expect_uint()?.expect_u64()?;
+                if r == 0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::F32 => {
+                let v = vl.expect_float()?.expect_f32()?;
+                let r = vr.expect_float()?.expect_f32()?;
+                if r == 0.0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+            Width::F64 => {
+                let v = vl.expect_float()?.expect_f64()?;
+                let r = vr.expect_float()?.expect_f64()?;
+                if r == 0.0 { return Err("division by zero".into()); }
+                Liternal::from(v % r)
+            }
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(result));
         Ok(())
     }
 
-    pub(crate) fn addi32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addi64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subi16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subi32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subi64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn muli8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn muli16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn muli32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn muli64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divi16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divi32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divi64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remi8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remi16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remi32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remi64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        if rhs_data == 0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn addf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data + rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn subf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data - rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn mulf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data * rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        if rhs_data == 0. {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn divf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        if rhs_data == 0.0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data / rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        if rhs_data == 0.0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn remf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        if rhs_data == 0.0 {
-            return Err("division by zero".into());
-        }
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data % rhs_data));
-        Ok(())
+    pub(crate) fn neg(&mut self, dst: Addr, src: Addr, ty: Width) -> Result<(), String> {
+        unop_width!(self, dst, src, ty, |v| -v)
     }
 }

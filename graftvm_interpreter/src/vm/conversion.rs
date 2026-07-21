@@ -1,248 +1,78 @@
 use graftvm_bytecode::Addr;
-use graftvm_liternal::Liternal;
+use graftvm_liternal::{Float, Int, Liternal, UInt};
 use graftvm_window::WindowSlot;
-use rpipe::pipe;
 
 use crate::vm::VM;
 
 impl VM {
-    pub(crate) fn extendi8_i16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i16);
+    pub(crate) fn extend(&mut self, dst: Addr, src: Addr, signed: bool) -> Result<(), String> {
+        let val = self.read_one(src)?;
+        let v = if signed {
+            match val.expect_int()? {
+                Int::Int8(v) => Liternal::from(*v as i16),
+                Int::Int16(v) => Liternal::from(*v as i32),
+                Int::Int32(v) => Liternal::from(*v as i64),
+                Int::Int64(_) => return Err("cannot extend i64".into()),
+            }
+        } else {
+            match val.expect_uint()? {
+                UInt::UInt8(v) => Liternal::from(*v as u16),
+                UInt::UInt16(v) => Liternal::from(*v as u32),
+                UInt::UInt32(v) => Liternal::from(*v as u64),
+                UInt::UInt64(_) => return Err("cannot extend u64".into()),
+            }
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(v));
         Ok(())
     }
 
-    pub(crate) fn extendi8_i32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i32);
+    pub(crate) fn trunc(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
+        let val = self.read_one(src)?;
+        let v = match val.expect_int()? {
+            Int::Int64(v) => Liternal::from(*v as i32),
+            Int::Int32(v) => Liternal::from(*v as i16),
+            Int::Int16(v) => Liternal::from(*v as i8),
+            Int::Int8(_) => return Err("cannot trunc i8".into()),
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(v));
         Ok(())
     }
 
-    pub(crate) fn extendi8_i64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i64);
+    pub(crate) fn reinterpret(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
+        let val = self.read_one(src)?;
+        let v = match &val {
+            Liternal::Int(Int::Int8(v)) => Liternal::from(*v as u8),
+            Liternal::Int(Int::Int16(v)) => Liternal::from(*v as u16),
+            Liternal::Int(Int::Int32(v)) => Liternal::from(*v as u32),
+            Liternal::Int(Int::Int64(v)) => Liternal::from(*v as u64),
+            Liternal::UInt(UInt::UInt8(v)) => Liternal::from(*v as i8),
+            Liternal::UInt(UInt::UInt16(v)) => Liternal::from(*v as i16),
+            Liternal::UInt(UInt::UInt32(v)) => Liternal::from(*v as i32),
+            Liternal::UInt(UInt::UInt64(v)) => Liternal::from(*v as i64),
+            _ => return Err("reinterpret: expected integer type".into()),
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(v));
         Ok(())
     }
 
-    pub(crate) fn extendi16_i32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i32);
-        Ok(())
-    }
-
-    pub(crate) fn extendi16_i64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i64);
-        Ok(())
-    }
-
-    pub(crate) fn extendi32_i64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i64);
-        Ok(())
-    }
-
-    pub(crate) fn extendu8_u16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u16);
-        Ok(())
-    }
-
-    pub(crate) fn extendu8_u32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u32);
-        Ok(())
-    }
-
-    pub(crate) fn extendu8_u64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u64);
-        Ok(())
-    }
-
-    pub(crate) fn extendu16_u32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u32);
-        Ok(())
-    }
-
-    pub(crate) fn extendu16_u64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u64);
-        Ok(())
-    }
-
-    pub(crate) fn extendu32_u64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u64);
-        Ok(())
-    }
-
-    pub(crate) fn trunci64_i32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i32);
-        Ok(())
-    }
-
-    pub(crate) fn trunci64_i16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i16);
-        Ok(())
-    }
-
-    pub(crate) fn trunci64_i8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i8);
-        Ok(())
-    }
-
-    pub(crate) fn trunci32_i16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i16);
-        Ok(())
-    }
-
-    pub(crate) fn trunci32_i8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i8);
-        Ok(())
-    }
-
-    pub(crate) fn trunci16_i8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i8);
-        Ok(())
-    }
-
-    // ── reinterpret (same-width, bit-preserving) ──
-
-    pub(crate) fn reinterpu8_i8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i8);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpu16_i16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i16);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpu32_i32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i32);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpu64_i64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i64);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpi8_u8(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u8);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpi16_u16(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u16);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpi32_u32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u32);
-        Ok(())
-    }
-
-    pub(crate) fn reinterpi64_u64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u64);
-        Ok(())
-    }
-
-    pub(crate) fn inttof32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as f32);
-        Ok(())
-    }
-
-    pub(crate) fn inttof64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as f64);
-        Ok(())
-    }
-
-    pub(crate) fn uinttof32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as f32);
-        Ok(())
-    }
-
-    pub(crate) fn uinttof64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as f64);
-        Ok(())
-    }
-
-    pub(crate) fn ftoint32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i32);
-        Ok(())
-    }
-
-    pub(crate) fn ftoint64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as i64);
-        Ok(())
-    }
-
-    pub(crate) fn ftouint32(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u32);
-        Ok(())
-    }
-
-    pub(crate) fn ftouint64(&mut self, dst: Addr, src: Addr) -> Result<(), String> {
-        let f = self.expect_number(src)?;
-        let v = f.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = pipe!(Some, WindowSlot::from, Liternal::from, v as u64);
+    pub(crate) fn convert(&mut self, dst: Addr, src: Addr, signed: bool) -> Result<(), String> {
+        let val = self.read_one(src)?;
+        let v = match (&val, signed) {
+            (Liternal::Int(Int::Int64(v)), true) => Liternal::from(*v as f64),
+            (Liternal::Int(Int::Int32(v)), true) => Liternal::from(*v as f32),
+            (Liternal::Int(Int::Int16(v)), true) => Liternal::from(*v as f32),
+            (Liternal::Int(Int::Int8(v)), true) => Liternal::from(*v as f32),
+            (Liternal::UInt(UInt::UInt64(v)), false) => Liternal::from(*v as f64),
+            (Liternal::UInt(UInt::UInt32(v)), false) => Liternal::from(*v as f32),
+            (Liternal::UInt(UInt::UInt16(v)), false) => Liternal::from(*v as f32),
+            (Liternal::UInt(UInt::UInt8(v)), false) => Liternal::from(*v as f32),
+            (Liternal::Float(Float::Float64(v)), true) => Liternal::from(*v as i64),
+            (Liternal::Float(Float::Float32(v)), true) => Liternal::from(*v as i32),
+            (Liternal::Float(Float::Float64(v)), false) => Liternal::from(*v as u64),
+            (Liternal::Float(Float::Float32(v)), false) => Liternal::from(*v as u32),
+            _ => return Err("convert: unsupported type combination".into()),
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(v));
         Ok(())
     }
 }

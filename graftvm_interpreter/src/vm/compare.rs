@@ -1,450 +1,139 @@
 use graftvm_bytecode::Addr;
+use graftvm_liternal::{Float, Int, Liternal, UInt};
+use graftvm_window::WindowSlot;
+
+use crate::vm::VM;
+
+#[derive(Clone, Copy)]
+enum Cmp { Lt, Le, Gt, Ge }
+
+impl VM {
+    fn cmp(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width, op: Cmp) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let result = match (ty, op) {
+            (Width::I8, Cmp::Lt) => Int::Int8(vl.expect_int()?.expect_i8()?) < Int::Int8(vr.expect_int()?.expect_i8()?),
+            (Width::I8, Cmp::Le) => Int::Int8(vl.expect_int()?.expect_i8()?) <= Int::Int8(vr.expect_int()?.expect_i8()?),
+            (Width::I8, Cmp::Gt) => Int::Int8(vl.expect_int()?.expect_i8()?) > Int::Int8(vr.expect_int()?.expect_i8()?),
+            (Width::I8, Cmp::Ge) => Int::Int8(vl.expect_int()?.expect_i8()?) >= Int::Int8(vr.expect_int()?.expect_i8()?),
+
+            (Width::I16, Cmp::Lt) => Int::Int16(vl.expect_int()?.expect_i16()?) < Int::Int16(vr.expect_int()?.expect_i16()?),
+            (Width::I16, Cmp::Le) => Int::Int16(vl.expect_int()?.expect_i16()?) <= Int::Int16(vr.expect_int()?.expect_i16()?),
+            (Width::I16, Cmp::Gt) => Int::Int16(vl.expect_int()?.expect_i16()?) > Int::Int16(vr.expect_int()?.expect_i16()?),
+            (Width::I16, Cmp::Ge) => Int::Int16(vl.expect_int()?.expect_i16()?) >= Int::Int16(vr.expect_int()?.expect_i16()?),
+
+            (Width::I32, Cmp::Lt) => Int::Int32(vl.expect_int()?.expect_i32()?) < Int::Int32(vr.expect_int()?.expect_i32()?),
+            (Width::I32, Cmp::Le) => Int::Int32(vl.expect_int()?.expect_i32()?) <= Int::Int32(vr.expect_int()?.expect_i32()?),
+            (Width::I32, Cmp::Gt) => Int::Int32(vl.expect_int()?.expect_i32()?) > Int::Int32(vr.expect_int()?.expect_i32()?),
+            (Width::I32, Cmp::Ge) => Int::Int32(vl.expect_int()?.expect_i32()?) >= Int::Int32(vr.expect_int()?.expect_i32()?),
+
+            (Width::I64, Cmp::Lt) => Int::Int64(vl.expect_int()?.expect_i64()?) < Int::Int64(vr.expect_int()?.expect_i64()?),
+            (Width::I64, Cmp::Le) => Int::Int64(vl.expect_int()?.expect_i64()?) <= Int::Int64(vr.expect_int()?.expect_i64()?),
+            (Width::I64, Cmp::Gt) => Int::Int64(vl.expect_int()?.expect_i64()?) > Int::Int64(vr.expect_int()?.expect_i64()?),
+            (Width::I64, Cmp::Ge) => Int::Int64(vl.expect_int()?.expect_i64()?) >= Int::Int64(vr.expect_int()?.expect_i64()?),
+
+            (Width::U8, Cmp::Lt) => vr.expect_uint()?.expect_u8()? < vr.expect_uint()?.expect_u8()?,
+            // Hmm, wait, that's using vr twice. Let me rewrite this differently.
+        }
+    }
+}
+```
+
+This is getting ugly. Let me just go back to the simple approach of 4 separate functions with match arms returning bool.
+
+Actually, the simplest working approach: just have four functions, each with a match. No macro. Just direct code.
+
+Wait, I realize I keep going back and forth. Let me just write clean code. A single helper with a 40-arm match (4 ops × 10 widths) is fine. The match is exhaustive and LLVM compiles it efficiently.<｜end▁of▁thinking｜>
+
+<｜｜DSML｜｜tool_calls>
+<｜｜DSML｜｜invoke name="computer_file_write">
+<｜｜DSML｜｜parameter name="content" string="true">use graftvm_bytecode::{Addr, Width};
 use graftvm_liternal::Liternal;
 use graftvm_window::WindowSlot;
-use rpipe::pipe;
 
 use crate::vm::VM;
 
 impl VM {
-    pub(crate) fn lti8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
+    pub(crate) fn lt(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let ok = match ty {
+            Width::I8 => vl.expect_int()?.expect_i8()? < vr.expect_int()?.expect_i8()?,
+            Width::I16 => vl.expect_int()?.expect_i16()? < vr.expect_int()?.expect_i16()?,
+            Width::I32 => vl.expect_int()?.expect_i32()? < vr.expect_int()?.expect_i32()?,
+            Width::I64 => vl.expect_int()?.expect_i64()? < vr.expect_int()?.expect_i64()?,
+            Width::U8 => vl.expect_uint()?.expect_u8()? < vr.expect_uint()?.expect_u8()?,
+            Width::U16 => vl.expect_uint()?.expect_u16()? < vr.expect_uint()?.expect_u16()?,
+            Width::U32 => vl.expect_uint()?.expect_u32()? < vr.expect_uint()?.expect_u32()?,
+            Width::U64 => vl.expect_uint()?.expect_u64()? < vr.expect_uint()?.expect_u64()?,
+            Width::F32 => vl.expect_float()?.expect_f32()? < vr.expect_float()?.expect_f32()?,
+            Width::F64 => vl.expect_float()?.expect_f64()? < vr.expect_float()?.expect_f64()?,
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(Liternal::from(ok)));
         Ok(())
     }
 
-    pub(crate) fn lti16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
+    pub(crate) fn le(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let ok = match ty {
+            Width::I8 => vl.expect_int()?.expect_i8()? <= vr.expect_int()?.expect_i8()?,
+            Width::I16 => vl.expect_int()?.expect_i16()? <= vr.expect_int()?.expect_i16()?,
+            Width::I32 => vl.expect_int()?.expect_i32()? <= vr.expect_int()?.expect_i32()?,
+            Width::I64 => vl.expect_int()?.expect_i64()? <= vr.expect_int()?.expect_i64()?,
+            Width::U8 => vl.expect_uint()?.expect_u8()? <= vr.expect_uint()?.expect_u8()?,
+            Width::U16 => vl.expect_uint()?.expect_u16()? <= vr.expect_uint()?.expect_u16()?,
+            Width::U32 => vl.expect_uint()?.expect_u32()? <= vr.expect_uint()?.expect_u32()?,
+            Width::U64 => vl.expect_uint()?.expect_u64()? <= vr.expect_uint()?.expect_u64()?,
+            Width::F32 => vl.expect_float()?.expect_f32()? <= vr.expect_float()?.expect_f32()?,
+            Width::F64 => vl.expect_float()?.expect_f64()? <= vr.expect_float()?.expect_f64()?,
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(Liternal::from(ok)));
         Ok(())
     }
 
-    pub(crate) fn lti32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
+    pub(crate) fn gt(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let ok = match ty {
+            Width::I8 => vl.expect_int()?.expect_i8()? > vr.expect_int()?.expect_i8()?,
+            Width::I16 => vl.expect_int()?.expect_i16()? > vr.expect_int()?.expect_i16()?,
+            Width::I32 => vl.expect_int()?.expect_i32()? > vr.expect_int()?.expect_i32()?,
+            Width::I64 => vl.expect_int()?.expect_i64()? > vr.expect_int()?.expect_i64()?,
+            Width::U8 => vl.expect_uint()?.expect_u8()? > vr.expect_uint()?.expect_u8()?,
+            Width::U16 => vl.expect_uint()?.expect_u16()? > vr.expect_uint()?.expect_u16()?,
+            Width::U32 => vl.expect_uint()?.expect_u32()? > vr.expect_uint()?.expect_u32()?,
+            Width::U64 => vl.expect_uint()?.expect_u64()? > vr.expect_uint()?.expect_u64()?,
+            Width::F32 => vl.expect_float()?.expect_f32()? > vr.expect_float()?.expect_f32()?,
+            Width::F64 => vl.expect_float()?.expect_f64()? > vr.expect_float()?.expect_f64()?,
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(Liternal::from(ok)));
         Ok(())
     }
 
-    pub(crate) fn lti64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn lei8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn lei16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn lei32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn lei64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gti8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gti16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gti32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gti64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gei8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i8()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gei16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i16()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gei32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i32()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gei64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_int()?.expect_i64()?;
-        let rhs_data = rhs_frag.data.expect_int()?.expect_i64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn ltu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn ltu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn ltu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn ltu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn leu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn leu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn leu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn leu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gtu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gtu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gtu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gtu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn geu8(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u8()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u8()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn geu16(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u16()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u16()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn geu32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u32()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn geu64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_uint()?.expect_u64()?;
-        let rhs_data = rhs_frag.data.expect_uint()?.expect_u64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn ltf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn ltf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data < rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn lef32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn lef64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data <= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gtf32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gtf64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? =
-            Some(pipe!(WindowSlot::from, Liternal::from, lhs_data > rhs_data));
-        Ok(())
-    }
-
-    pub(crate) fn gef32(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f32()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f32()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
-        Ok(())
-    }
-
-    pub(crate) fn gef64(&mut self, dst: Addr, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let (lhs_frag, rhs_frag) = self.expect_number_lhs_rhs(lhs, rhs)?;
-        let lhs_data = lhs_frag.data.expect_float()?.expect_f64()?;
-        let rhs_data = rhs_frag.data.expect_float()?.expect_f64()?;
-        *self.get_slot_mut(dst)? = Some(pipe!(
-            WindowSlot::from,
-            Liternal::from,
-            lhs_data >= rhs_data
-        ));
+    pub(crate) fn ge(&mut self, dst: Addr, lhs: Addr, rhs: Addr, ty: Width) -> Result<(), String> {
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        let ok = match ty {
+            Width::I8 => vl.expect_int()?.expect_i8()? >= vr.expect_int()?.expect_i8()?,
+            Width::I16 => vl.expect_int()?.expect_i16()? >= vr.expect_int()?.expect_i16()?,
+            Width::I32 => vl.expect_int()?.expect_i32()? >= vr.expect_int()?.expect_i32()?,
+            Width::I64 => vl.expect_int()?.expect_i64()? >= vr.expect_int()?.expect_i64()?,
+            Width::U8 => vl.expect_uint()?.expect_u8()? >= vr.expect_uint()?.expect_u8()?,
+            Width::U16 => vl.expect_uint()?.expect_u16()? >= vr.expect_uint()?.expect_u16()?,
+            Width::U32 => vl.expect_uint()?.expect_u32()? >= vr.expect_uint()?.expect_u32()?,
+            Width::U64 => vl.expect_uint()?.expect_u64()? >= vr.expect_uint()?.expect_u64()?,
+            Width::F32 => vl.expect_float()?.expect_f32()? >= vr.expect_float()?.expect_f32()?,
+            Width::F64 => vl.expect_float()?.expect_f64()? >= vr.expect_float()?.expect_f64()?,
+        };
+        *self.slot_mut(dst.slot) = Some(WindowSlot::from(Liternal::from(ok)));
         Ok(())
     }
 
     pub(crate) fn eq(&mut self, lhs: Addr, rhs: Addr) -> Result<(), String> {
-        let lhs_slot = self.get_slot(lhs)?;
-        let rhs_slot = self.get_slot(rhs)?;
-
-        self.state.cmp = match lhs_slot {
-            Some(lhs_frag) => match rhs_slot {
-                Some(rhs_frag) => lhs_frag.data == rhs_frag.data,
-                None => false,
-            },
-            None => rhs_slot.is_none(),
-        };
-
+        let (vl, vr) = self.read_two(lhs, rhs)?;
+        self.state.cmp = vl == vr;
         Ok(())
     }
 
     pub(crate) fn neq(&mut self, lhs: Addr, rhs: Addr) -> Result<(), String> {
         self.eq(lhs, rhs)?;
         self.state.cmp = !self.state.cmp;
-
         Ok(())
     }
 }
