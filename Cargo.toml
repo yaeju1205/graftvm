@@ -10,4 +10,5 @@ members = [
     "graftvm_window",
     "graftvm_interpreter",
     "graftvm_ir",
+    "graftvm_language",
 ]
