@@ -1,0 +1,9 @@
+[package]
+name = "graftvm_language"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+graftvm_liternal = { path = "../graftvm_liternal" }
+graftvm_bytecode = { path = "../graftvm_bytecode" }
+graftvm_ir = { path = "../graftvm_ir" }

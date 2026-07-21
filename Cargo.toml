@@ -3,6 +3,10 @@ name = "graftvm"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+graftvm_bytecode = { path = "graftvm_bytecode" }
+graftvm_language = { path = "graftvm_language" }
+
 [workspace]
 members = [
     "graftvm_liternal",
@@ -10,4 +14,5 @@ members = [
     "graftvm_window",
     "graftvm_interpreter",
     "graftvm_ir",
+    "graftvm_language",
 ]
