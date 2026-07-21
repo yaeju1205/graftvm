@@ -1,165 +1,99 @@
-use std::{collections::HashMap, rc::Rc};
+use std::collections::HashMap;
 
-use graftvm_bytecode::{Bytecode, Opcode, Width};
+use graftvm_bytecode::{Bytecode, Opcode};
 use graftvm_liternal::Liternal;
-use graftvm_window::Window;
+use graftvm_window::{Window, WindowSlot};
 
 mod arithmetic;
 mod bitwise;
 mod compare;
 mod constant;
 mod conversion;
-mod unary;
-mod utils;
 mod window;
 
 #[derive(Default)]
-struct VMState {
+pub(super) struct VMState {
     pub cmp: bool,
 }
 
 pub struct VM {
     bytecode: Bytecode,
     pc: usize,
-    window: Rc<Window>,
-    window_stack: Vec<Rc<Window>>,
-    constant_pool: HashMap<usize, Rc<Liternal>>,
-    state: VMState,
+    pub(super) window_stack: Vec<Window>,
+    pub(super) constant_pool: HashMap<usize, Liternal>,
+    pub(super) state: VMState,
 }
 
-// ── width-dispatch helpers used across modules ──
+// ── Width-dispatch macros used by arithmetic/bitwise/compare modules ──
 
 macro_rules! binop_width {
     ($self:expr, $dst:expr, $lhs:expr, $rhs:expr, $ty:expr, |$v:ident, $r:ident| $expr:expr) => {{
-        let (lhs_frag, rhs_frag) = $self.expect_number_lhs_rhs($lhs, $rhs)?;
-        match $ty {
+        let (val_l, val_r) = $self.read_two($lhs, $rhs)?;
+        let result = match $ty {
             Width::I8 => {
-                let $v = lhs_frag.data.expect_int()?.expect_i8()?;
-                let $r = rhs_frag.data.expect_int()?.expect_i8()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_int()?.expect_i8()?;
+                let $r = val_r.expect_int()?.expect_i8()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I16 => {
-                let $v = lhs_frag.data.expect_int()?.expect_i16()?;
-                let $r = rhs_frag.data.expect_int()?.expect_i16()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_int()?.expect_i16()?;
+                let $r = val_r.expect_int()?.expect_i16()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I32 => {
-                let $v = lhs_frag.data.expect_int()?.expect_i32()?;
-                let $r = rhs_frag.data.expect_int()?.expect_i32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_int()?.expect_i32()?;
+                let $r = val_r.expect_int()?.expect_i32()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::I64 => {
-                let $v = lhs_frag.data.expect_int()?.expect_i64()?;
-                let $r = rhs_frag.data.expect_int()?.expect_i64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_int()?.expect_i64()?;
+                let $r = val_r.expect_int()?.expect_i64()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U8 => {
-                let $v = lhs_frag.data.expect_uint()?.expect_u8()?;
-                let $r = rhs_frag.data.expect_uint()?.expect_u8()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_uint()?.expect_u8()?;
+                let $r = val_r.expect_uint()?.expect_u8()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U16 => {
-                let $v = lhs_frag.data.expect_uint()?.expect_u16()?;
-                let $r = rhs_frag.data.expect_uint()?.expect_u16()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_uint()?.expect_u16()?;
+                let $r = val_r.expect_uint()?.expect_u16()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U32 => {
-                let $v = lhs_frag.data.expect_uint()?.expect_u32()?;
-                let $r = rhs_frag.data.expect_uint()?.expect_u32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_uint()?.expect_u32()?;
+                let $r = val_r.expect_uint()?.expect_u32()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::U64 => {
-                let $v = lhs_frag.data.expect_uint()?.expect_u64()?;
-                let $r = rhs_frag.data.expect_uint()?.expect_u64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_uint()?.expect_u64()?;
+                let $r = val_r.expect_uint()?.expect_u64()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::F32 => {
-                let $v = lhs_frag.data.expect_float()?.expect_f32()?;
-                let $r = rhs_frag.data.expect_float()?.expect_f32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_float()?.expect_f32()?;
+                let $r = val_r.expect_float()?.expect_f32()?;
+                graftvm_liternal::Liternal::from($expr)
             }
             Width::F64 => {
-                let $v = lhs_frag.data.expect_float()?.expect_f64()?;
-                let $r = rhs_frag.data.expect_float()?.expect_f64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
+                let $v = val_l.expect_float()?.expect_f64()?;
+                let $r = val_r.expect_float()?.expect_f64()?;
+                graftvm_liternal::Liternal::from($expr)
             }
-        }
+        };
+        *$self.slot_mut(($dst).slot) = Some(graftvm_window::WindowSlot::from(result));
         Ok(())
     }};
 }
 
-macro_rules! unop_width {
-    ($self:expr, $dst:expr, $src:expr, $ty:expr, |$v:ident| $expr:expr) => {{
-        let frag = $self.expect_number($src)?;
-        match $ty {
-            Width::I8 => {
-                let $v = frag.data.expect_int()?.expect_i8()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::I16 => {
-                let $v = frag.data.expect_int()?.expect_i16()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::I32 => {
-                let $v = frag.data.expect_int()?.expect_i32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::I64 => {
-                let $v = frag.data.expect_int()?.expect_i64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::U8 => {
-                let $v = frag.data.expect_uint()?.expect_u8()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::U16 => {
-                let $v = frag.data.expect_uint()?.expect_u16()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::U32 => {
-                let $v = frag.data.expect_uint()?.expect_u32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::U64 => {
-                let $v = frag.data.expect_uint()?.expect_u64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::F32 => {
-                let $v = frag.data.expect_float()?.expect_f32()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-            Width::F64 => {
-                let $v = frag.data.expect_float()?.expect_f64()?;
-                *$self.get_slot_mut($dst)? = Some($crate::vm::pipe_ws_lit!($expr));
-            }
-        }
-        Ok(())
-    }};
-}
-
-#[macro_export]
-macro_rules! pipe_ws_lit {
-    ($expr:expr) => {
-        rpipe::pipe!(graftvm_window::WindowSlot::from, graftvm_liternal::Liternal::from, $expr)
-    };
-}
-
-#[macro_export]
-macro_rules! pipe_ws_lit_some {
-    ($expr:expr) => {
-        rpipe::pipe!(Some, graftvm_window::WindowSlot::from, graftvm_liternal::Liternal::from, $expr)
-    };
-}
+pub(super) use binop_width;
 
 impl VM {
     pub fn new(bytecode: Bytecode) -> Self {
-        let bottom_window = Rc::new(Window::new(0));
-
         Self {
             bytecode,
             pc: 0,
-            window: bottom_window.clone(),
-            window_stack: vec![bottom_window],
+            window_stack: vec![Window::new(0)],
             constant_pool: HashMap::new(),
             state: VMState::default(),
         }
@@ -174,12 +108,12 @@ impl VM {
             Opcode::Rem { dst, lhs, rhs, ty } => self.rem(dst, lhs, rhs, ty)?,
             Opcode::Neg { dst, src, ty } => self.neg(dst, src, ty)?,
 
-            Opcode::Lt { dst, lhs, rhs, ty } => self.lt(dst, lhs, rhs, ty)?,
-            Opcode::Le { dst, lhs, rhs, ty } => self.le(dst, lhs, rhs, ty)?,
-            Opcode::Gt { dst, lhs, rhs, ty } => self.gt(dst, lhs, rhs, ty)?,
-            Opcode::Ge { dst, lhs, rhs, ty } => self.ge(dst, lhs, rhs, ty)?,
-            Opcode::Eq { lhs, rhs } => self.eq(lhs, rhs)?,
-            Opcode::Neq { lhs, rhs } => self.neq(lhs, rhs)?,
+            Opcode::Lt { dst, lhs, rhs, ty } => self.cmp_lt(dst, lhs, rhs, ty)?,
+            Opcode::Le { dst, lhs, rhs, ty } => self.cmp_le(dst, lhs, rhs, ty)?,
+            Opcode::Gt { dst, lhs, rhs, ty } => self.cmp_gt(dst, lhs, rhs, ty)?,
+            Opcode::Ge { dst, lhs, rhs, ty } => self.cmp_ge(dst, lhs, rhs, ty)?,
+            Opcode::Eq { lhs, rhs } => self.cmp_eq(lhs, rhs)?,
+            Opcode::Neq { lhs, rhs } => self.cmp_neq(lhs, rhs)?,
 
             Opcode::And { dst, lhs, rhs, ty } => self.and(dst, lhs, rhs, ty)?,
             Opcode::Or { dst, lhs, rhs, ty } => self.or(dst, lhs, rhs, ty)?,
@@ -209,13 +143,15 @@ impl VM {
             Opcode::LoadData { dst, index } => self.load_data(dst, index)?,
 
             Opcode::Move { dst, src } => {
-                *self.get_slot_mut(dst)? = self.get_slot_mut(src)?.take();
+                let val = self.slot_mut(src.slot).take();
+                *self.slot_mut(dst.slot) = val;
             }
             Opcode::Copy { dst, src } => {
-                *self.get_slot_mut(dst)? = self.get_slot_mut(src)?.clone();
+                let val = self.read_one(src)?.clone();
+                *self.slot_mut(dst.slot) = Some(WindowSlot::from(val));
             }
             Opcode::Drop { src } => {
-                *self.get_slot_mut(src)? = None;
+                *self.slot_mut(src.slot) = None;
             }
 
             Opcode::Enter => self.enter_window()?,
@@ -236,5 +172,61 @@ impl VM {
             self.step()?;
         }
         Ok(())
+    }
+}
+
+// ── Slot read helpers (owned, not borrowed) ──
+
+impl VM {
+    /// Read one slot's data as an owned `Liternal`.
+    pub(super) fn read_one(&self, addr: graftvm_bytecode::Addr) -> Result<Liternal, String> {
+        let w = self.current_window();
+        w.slots
+            .get(addr.slot)
+            .and_then(|s| s.as_ref())
+            .map(|s| s.data.clone())
+            .ok_or_else(|| format!("slot {} empty or out of bounds", addr.slot))
+    }
+
+    /// Read two slots' data as owned `Liternal` values.
+    pub(super) fn read_two(
+        &self,
+        lhs: graftvm_bytecode::Addr,
+        rhs: graftvm_bytecode::Addr,
+    ) -> Result<(Liternal, Liternal), String> {
+        let w = self.current_window();
+        let l = w
+            .slots
+            .get(lhs.slot)
+            .and_then(|s| s.as_ref())
+            .map(|s| s.data.clone())
+            .ok_or_else(|| format!("slot {} empty", lhs.slot))?;
+        let r = w
+            .slots
+            .get(rhs.slot)
+            .and_then(|s| s.as_ref())
+            .map(|s| s.data.clone())
+            .ok_or_else(|| format!("slot {} empty", rhs.slot))?;
+        Ok((l, r))
+    }
+
+    /// Mutable reference to a slot (resizes vec as needed).
+    pub(super) fn slot_mut(&mut self, slot: usize) -> &mut Option<WindowSlot> {
+        let w = self.current_window_mut();
+        if slot >= w.slots.len() {
+            w.slots.resize(slot + 1, None);
+        }
+        &mut w.slots[slot]
+    }
+
+    // Helpers for window access
+    pub(super) fn current_window(&self) -> &Window {
+        let len = self.window_stack.len();
+        &self.window_stack[len - 1]
+    }
+
+    pub(super) fn current_window_mut(&mut self) -> &mut Window {
+        let len = self.window_stack.len();
+        &mut self.window_stack[len - 1]
     }
 }

@@ -9,4 +9,5 @@ members = [
     "graftvm_bytecode",
     "graftvm_window",
     "graftvm_interpreter",
+    "graftvm_ir",
 ]
