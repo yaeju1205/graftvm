@@ -20,6 +20,7 @@ dependencies = [
  "graftvm_bytecode",
  "graftvm_liternal",
  "graftvm_window",
+ "rpipe",
 ]
 
 [[package]]
@@ -32,3 +33,9 @@ version = "0.1.0"
 dependencies = [
  "graftvm_liternal",
 ]
+
+[[package]]
+name = "rpipe"
+version = "0.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a3a5c0bb383fcbdaa5cc65b898a90ac6896b38a8781c2421b7585b8e5a0696da"

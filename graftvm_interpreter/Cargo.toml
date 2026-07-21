@@ -4,6 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+rpipe = "0.1.0"
+
 graftvm_liternal = { path = "../graftvm_liternal" }
 graftvm_bytecode = { path = "../graftvm_bytecode" }
 graftvm_window = { path = "../graftvm_window" }
